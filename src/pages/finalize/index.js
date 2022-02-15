@@ -7,15 +7,39 @@ import { useRef, useState } from "react";
 import Input from "../../components/Formik/Input";
 import dynamic from "next/dynamic";
 import TextError from "../../components/Formik/TextError";
+import { useRouter } from "next/router";
 const CustomSelect = dynamic(
   () => import("../../components/Formik/CustomSelect"),
   { ssr: false }
 );
 
 export default function Finalize() {
+  //const [session] = useSession();
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const filePickerRef = useRef(null);
+  const router = useRouter();
+
+  const finishUserProfile = async (values) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    const res = await fetch("http://localhost:3000/api/verify-profile/", {
+      method: "POST",
+      "Content-Type": "application/json",
+      body: JSON.stringify(values),
+    });
+
+    if (res.status === 200) {
+      setIsSubmitting(false);
+      setSelectedFile(null);
+      router.push("/");
+    } else {
+      setIsSubmitting(false);
+      setSelectedFile(null);
+      console.log("Error with profile creation");
+    }
+  };
 
   const schools = [
     { value: "metropolia", label: "Metropolia" },
@@ -24,6 +48,12 @@ export default function Finalize() {
     { value: "haaga-helia", label: "Haaga-Helia" },
     { value: "xamk", label: "XAMK" },
     { value: "school-of-life", label: "Elämämkoulu" },
+  ];
+
+  const genders = [
+    { value: "male", label: "Mies" },
+    { value: "female", label: "Nainen" },
+    { value: "other", label: "Muu" },
   ];
 
   return (
@@ -42,7 +72,7 @@ export default function Finalize() {
           school: "",
           age: "",
           gender: "",
-          lookingForGender: "",
+          lookingForGender: [],
           lookingForSchools: [],
           image: "",
         }}
@@ -59,14 +89,16 @@ export default function Finalize() {
             .min(18, "Sinun täytyy olla vähintään 18")
             .max(60, "Yli 60 vuotias ei ole opiskelija..."),
           gender: Yup.string().required("Sukupuoli vaaditaan"),
-          lookingForGender: Yup.string().required("Kerro ketä etsit"),
+          lookingForGender: Yup.array()
+            .required("Vähintään yksi sukupuoli valittava")
+            .min(1, "Vähintään yksi sukupuoli valittava"),
           lookingForSchools: Yup.array()
             .required("Vähintään yksi koulu valittava")
             .min(1, "Vähintään yksi koulu valittava"),
           image: Yup.string().required("Kuva vaaditaan"),
         })}
         onSubmit={(values) => {
-          console.log("Values: ", values);
+          finishUserProfile(values);
         }}
       >
         {(formik) => (
@@ -182,7 +214,7 @@ export default function Finalize() {
                   <Field
                     className=""
                     name="gender"
-                    options={schools}
+                    options={genders}
                     component={CustomSelect}
                   />
                   <ErrorMessage name="gender" component={TextError} />
@@ -196,8 +228,9 @@ export default function Finalize() {
                   </label>
                   <Field
                     name="lookingForGender"
-                    options={schools}
+                    options={genders}
                     component={CustomSelect}
+                    isMulti
                   />
                   <ErrorMessage name="lookingForGender" component={TextError} />
                 </div>

@@ -3,7 +3,7 @@ import Providers from "next-auth/providers";
 import { FirebaseAdapter } from "@next-auth/firebase-adapter";
 
 /**Temporaty solution  */
-import firestore from "../../../firebase/firebase";
+import { firestore } from "../../../firebase/firebase";
 /**------------------------- */
 
 export default NextAuth({
@@ -33,30 +33,15 @@ export default NextAuth({
       }
       return token;
     },
-    async session(session, token) {
+    async session(session, token, user) {
       session.accessToken = token.accessToken;
       session.user.id = token.sub;
       return session;
     },
     async signIn(user, account, profile) {
-      const userToSearch = user;
-      return firestore
-        .collection("users")
-        .doc(`${userToSearch.id}`)
-        .get()
-        .then((doc) => {
-          if (doc.exists) {
-            console.log(doc.data());
-            return true;
-          } else {
-            console.log("No doc found");
-            return "/finalize";
-          }
-        })
-        .catch((error) => {
-          console.log("Error getting document ", error);
-          return false;
-        });
+      //const userToSearch = user;
+      // In the future check if user is banned
+      return true;
     },
   },
   pages: {

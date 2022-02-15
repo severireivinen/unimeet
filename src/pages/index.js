@@ -3,16 +3,9 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import CardSwiper from "../components/CardSwiper";
 import FooterNav from "../components/FooterNav";
-import ProfileInfoModal from "../components/ProfileInfoModal";
-import { useRecoilState } from "recoil";
-import { profileInfoModalState } from "../atoms/modals";
-import { useSession, getSession } from "next-auth/client";
+import { getSession } from "next-auth/client";
 
-export default function Home() {
-  const [open, setOpen] = useRecoilState(profileInfoModalState);
-  const [session] = useSession();
-  //console.log(session);
-
+export default function Home({ userProfile }) {
   return (
     <div className="bg-gray-100 flex flex-col smlg:flex-row min-h-screen overflow-hidden">
       <Head>
@@ -25,15 +18,13 @@ export default function Home() {
       <Header />
 
       {/**Sidebar for desktop */}
-      <Sidebar />
+      <Sidebar user={userProfile} />
 
       {/**Cardswiper */}
       <CardSwiper users={[]} />
 
       {/**Navigation for mobile */}
       <FooterNav />
-      <button onClick={() => setOpen(true)}>Open modal</button>
-      <ProfileInfoModal />
     </div>
   );
 }
@@ -47,11 +38,46 @@ export async function getServerSideProps(context) {
         destination: "/auth/signin",
       },
     };
+  } else {
+    const res = await fetch(
+      `http://localhost:3000/api/verify-profile/${session.user.id}`,
+      { method: "GET" }
+    );
+
+    if (!res.ok) {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/finalize",
+        },
+      };
+    } else {
+      const res = await fetch(
+        `http://localhost:3000/api/users/${session.user.id}`
+      );
+
+      if (res.status !== 200) {
+        console.error("Unable to get user details");
+        return {
+          redirect: {
+            permanent: false,
+            destination: "/auth/signin",
+          },
+        };
+      } else {
+        const data = await res.json();
+        return {
+          props: {
+            userProfile: data,
+          },
+        };
+      }
+    }
   }
 
-  return {
+  /*return {
     props: {
       session,
     },
-  };
+  };*/
 }
