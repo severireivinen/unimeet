@@ -5,8 +5,6 @@ export default async function handler(req, res) {
 
   const doc = await firestore.collection("users").doc(userId).get();
 
-  console.log(doc.data());
-
   if (!doc.exists) {
     return res.status(404);
   } else {

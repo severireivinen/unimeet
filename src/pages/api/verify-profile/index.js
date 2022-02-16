@@ -23,6 +23,7 @@ export default async function handler(req, res) {
       .collection("users")
       .doc(userId)
       .set({
+        id: session.user.id,
         name: body.name,
         email: body.email,
         emailVerified: null,

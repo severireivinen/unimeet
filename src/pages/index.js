@@ -21,7 +21,7 @@ export default function Home({ userProfile }) {
       <Sidebar user={userProfile} />
 
       {/**Cardswiper */}
-      <CardSwiper users={[]} />
+      <CardSwiper />
 
       {/**Navigation for mobile */}
       <FooterNav />
@@ -40,8 +40,7 @@ export async function getServerSideProps(context) {
     };
   } else {
     const res = await fetch(
-      `http://localhost:3000/api/verify-profile/${session.user.id}`,
-      { method: "GET" }
+      `http://localhost:3000/api/verify-profile/${session.user.id}`
     );
 
     if (!res.ok) {
@@ -56,7 +55,7 @@ export async function getServerSideProps(context) {
         `http://localhost:3000/api/users/${session.user.id}`
       );
 
-      if (res.status !== 200) {
+      if (!res.ok) {
         console.error("Unable to get user details");
         return {
           redirect: {
@@ -74,10 +73,4 @@ export async function getServerSideProps(context) {
       }
     }
   }
-
-  /*return {
-    props: {
-      session,
-    },
-  };*/
 }
