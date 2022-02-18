@@ -3,9 +3,11 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import CardSwiper from "../components/CardSwiper";
 import FooterNav from "../components/FooterNav";
-import { getSession } from "next-auth/client";
+import { getSession } from "next-auth/react";
 
 export default function Home({ userProfile }) {
+  //console.log(userProfile);
+
   return (
     <div className="bg-gray-100 flex flex-col smlg:flex-row min-h-screen overflow-hidden">
       <Head>
@@ -29,8 +31,11 @@ export default function Home({ userProfile }) {
   );
 }
 
+// To check if the user is singed up and made a profile
 export async function getServerSideProps(context) {
   const session = await getSession(context);
+
+  // Not signed in
   if (!session) {
     return {
       redirect: {
@@ -40,37 +45,26 @@ export async function getServerSideProps(context) {
     };
   } else {
     const res = await fetch(
-      `http://localhost:3000/api/verify-profile/${session.user.id}`
+      `http://localhost:3000/api/auth/verify/${session.user.id}`
     );
 
-    if (!res.ok) {
+    const data = await res.json();
+
+    // No profile created
+    if (data.noProfile) {
       return {
         redirect: {
           permanent: false,
           destination: "/finalize",
         },
       };
+      // Profile created
     } else {
-      const res = await fetch(
-        `http://localhost:3000/api/users/${session.user.id}`
-      );
-
-      if (!res.ok) {
-        console.error("Unable to get user details");
-        return {
-          redirect: {
-            permanent: false,
-            destination: "/auth/signin",
-          },
-        };
-      } else {
-        const data = await res.json();
-        return {
-          props: {
-            userProfile: data,
-          },
-        };
-      }
+      return {
+        props: {
+          userProfile: data,
+        },
+      };
     }
   }
 }

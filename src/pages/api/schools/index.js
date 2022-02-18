@@ -1,15 +1,9 @@
-import { firestore } from "../../../firebase/firebase";
+import clientPromise from "../../../lib/mongodb";
 
 export default async function handler(req, res) {
-  const schools = [];
-  await firestore
-    .collection("schools")
-    .get()
-    .then((querySnapshot) => {
-      querySnapshot.forEach((doc) => {
-        schools.push(doc.data());
-      });
-    });
-  console.log("API: schools: ", schools);
+  const client = await clientPromise;
+  const db = client.db();
+
+  const schools = await db.collection("schools").find({}).toArray();
   return res.status(200).json(schools);
 }

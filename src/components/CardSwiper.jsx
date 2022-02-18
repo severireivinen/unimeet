@@ -4,21 +4,22 @@ import { HeartIcon, StarIcon, XIcon } from "@heroicons/react/solid";
 import { AcademicCapIcon, InformationCircleIcon } from "@heroicons/react/solid";
 import TinderCard from "react-tinder-card";
 import Loader from "./Loader";
-import { firestore } from "../firebase/firebase";
-import { useSession } from "next-auth/client";
+import { useSession } from "next-auth/react";
 
 function CardSwiper() {
   const [profiles, setProfiles] = useState([]);
-  const [session] = useSession();
+  const { data: session } = useSession();
 
   useEffect(() => {
-    async function getProfiles() {
-      const res = await fetch(`http://localhost:3000/api/get-profiles`);
-      const data = await res.json();
-      setProfiles(data);
-    }
-    getProfiles();
+    fetchProfiles().then((profiles) => setProfiles(profiles));
   }, [session]);
+
+  const fetchProfiles = async () => {
+    const res = await fetch(`http://localhost:3000/api/getProfiles`);
+    const data = await res.json();
+    console.log(data);
+    return data;
+  };
 
   const swiped = async (direction, card) => {
     console.log(direction);
@@ -26,21 +27,9 @@ function CardSwiper() {
     if (!card) return;
 
     if (direction === "left") {
-      await firestore
-        .collection("users")
-        .doc(session.user.id)
-        .collection("dislikes")
-        .doc(card.id)
-        .set(card);
     }
 
     if (direction === "right") {
-      await firestore
-        .collection("users")
-        .doc(session.user.id)
-        .collection("likes")
-        .doc(card.id)
-        .set(card);
     }
     if (direction === "left" || direction === "right") {
       //console.log("removing: " + user.name);
@@ -65,7 +54,7 @@ function CardSwiper() {
     <main className="flex-1 relative overflow-hidden">
       {profiles.map((user) => (
         <TinderCard
-          key={user.id}
+          key={user._id}
           onSwipe={(direction) => swiped(direction, user)}
           onCardLeftScreen={() => outOfFrame(user)}
           preventSwipe={["up", "down"]}

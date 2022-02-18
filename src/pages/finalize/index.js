@@ -8,6 +8,7 @@ import Input from "../../components/Formik/Input";
 import dynamic from "next/dynamic";
 import TextError from "../../components/Formik/TextError";
 import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
 const CustomSelect = dynamic(
   () => import("../../components/Formik/CustomSelect"),
   { ssr: false }
@@ -16,18 +17,22 @@ const CustomSelect = dynamic(
 export default function Finalize({ schools, genders }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: session } = useSession();
   const filePickerRef = useRef(null);
   const router = useRouter();
 
-  const finishUserProfile = async (values) => {
+  const createProfile = async (values) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    const res = await fetch("http://localhost:3000/api/verify-profile/", {
-      method: "POST",
-      "Content-Type": "application/json",
-      body: JSON.stringify(values),
-    });
+    const res = await fetch(
+      `http://localhost:3000/api/auth/verify/${session.user.id}`,
+      {
+        method: "POST",
+        "Content-Type": "application/json",
+        body: JSON.stringify(values),
+      }
+    );
 
     if (res.status === 200) {
       setIsSubmitting(false);
@@ -82,7 +87,7 @@ export default function Finalize({ schools, genders }) {
           image: Yup.string().required("Kuva vaaditaan"),
         })}
         onSubmit={(values) => {
-          finishUserProfile(values);
+          createProfile(values);
         }}
       >
         {(formik) => (
